@@ -1,4 +1,5 @@
-const puppeteer = require('puppeteer');
+const chromium = require('chrome-aws-lambda');
+
 const fs = require('fs');
 const URL = require('url').URL;
 const URLParse = require('url').parse;
@@ -58,17 +59,17 @@ const callChrome = async () => {
             }
 
             try {
-                browser = await puppeteer.connect( options );
+                browser = await chromium.puppeteer.connect( options );
 
                 remoteInstance = true;
             } catch (exception) { /** does nothing. fallbacks to launching a chromium instance */}
         }
 
         if (!browser) {
-            browser = await puppeteer.launch({
+            browser = await chromium.puppeteer.launch({
                 ignoreHTTPSErrors: request.options.ignoreHttpsErrors,
-                executablePath: request.options.executablePath,
-                args: request.options.args || []
+                executablePath: await chromium.executablePath,
+                args: [...chromium.args, ...(request.options.args || [])],
             });
         }
 
@@ -128,7 +129,7 @@ const callChrome = async () => {
         }
 
         if (request.options && request.options.device) {
-            const devices = puppeteer.devices;
+            const devices = chromium.puppeteer.devices;
             const device = devices[request.options.device];
             await page.emulate(device);
         }
